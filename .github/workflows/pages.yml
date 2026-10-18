@@ -20,9 +20,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate frontend JavaScript
         run: node --check portal.js
+      - name: Check portal pages and reports
+        run: node tests/frontend.cjs
       - uses: actions/configure-pages@v5
         with:
-          enablement: true
+          enablement: false
       - name: Stage public files only
         run: |
           mkdir _site
