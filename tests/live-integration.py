@@ -42,6 +42,9 @@ check('Leadership role creation denied',lambda:mutate(staff,'roles',newrole['nam
 check('Developer role creation works',lambda:mutate(dev,'roles',newrole['name'],None,newrole))
 check('Stale concurrent edit rejected',lambda:mutate(dev,'roles',newrole['name'],None,newrole,False))
 check('Role colour injection rejected',lambda:mutate(dev,'roles','Bad',None,{'name':'Bad','color':'red;display:none'},False))
+for protected in fixtures[:2]:
+ b={'caseId':'protected-test','displayName':'Test','username':'Test','discordId':protected['id'],'reason':'Test','issuedBy':'staff','approvedBy':'staff'}
+ check('Leadership cannot blacklist '+protected['label'],lambda b=b:mutate(staff,'blacklist',b['caseId'],None,b,False))
 check('Leadership cannot grant leadership',lambda:api('promote',{'id':fixtures[2]['id'],'enabled':True},staff,False))
 old=next(m for m in state(member)['data']['members'] if m['id']==fixtures[2]['id'])
 check('Member cannot edit own roles',lambda:mutate(member,'members',old['id'],old,{**old,'role':['Leadership']},False))

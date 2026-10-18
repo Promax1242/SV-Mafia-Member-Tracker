@@ -136,6 +136,9 @@ begin
     if v is not null and ((coalesce(v->'role','[]') ? 'Developer') is distinct from (coalesce(old->'role','[]') ? 'Developer') or (coalesce(v->'role','[]') ? 'Leadership') is distinct from (coalesce(old->'role','[]') ? 'Leadership')) then raise exception 'Use Developer Leadership Access to change permissions'; end if;
    else select payload into old from sv_private.records where kind=k and id=rid;
    end if;
+   if k='blacklist' then
+    if exists(select 1 from sv_private.members protected_member where protected_member.discord_id in (v->>'discordId',old->>'discordId') and (protected_member.access='developer' or (protected_member.access='staff' and me.access<>'developer'))) then raise exception 'Protected account'; end if;
+   end if;
    if old is distinct from nullif(c->'before','null'::jsonb) then raise exception 'Record changed on another device. Refresh and try again.'; end if;
    if k='roles' and (rid in ('Developer','Leadership') or v->>'name' in ('Developer','Leadership')) then raise exception 'Reserved role'; end if;
    if k='members' then
@@ -170,7 +173,10 @@ begin
   where new.email=m.discord_id||'@members.sv-mafia.invalid' and
   ((a.state='processing' and a.expires>now() and a.provision_user_id=new.id) or (tg_op='UPDATE' and m.user_id=new.id)))
  then raise exception 'Use an approved PIR activation code'; end if;
+ if tg_op='UPDATE' and new.encrypted_password is distinct from old.encrypted_password and not exists(
+  select 1 from sv_private.activations active_claim where active_claim.state='processing' and active_claim.expires>now() and active_claim.provision_user_id=new.id
+ ) then raise exception 'Use a Leadership password reset code'; end if;
  return new;
 end $$;
 revoke all on function sv_private.guard_auth_identity() from public,anon,authenticated;
-create trigger sv_guard_auth before insert or update of email on auth.users for each row execute function sv_private.guard_auth_identity();
+create trigger sv_guard_auth before insert or update of email,encrypted_password on auth.users for each row execute function sv_private.guard_auth_identity();

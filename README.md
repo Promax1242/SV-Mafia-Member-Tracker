@@ -19,7 +19,7 @@ All application tables are in the unexposed `sv_private` schema, have RLS enable
 
 The internal security-definer function has a fixed empty search path and no public EXECUTE grant. It exists to enforce atomic authorization and changes across private tables. It cannot be called by browser sessions. Changes use compare-before-write in one transaction, avoiding silent overwrites from other devices. Staff identity in warnings/LOAs and audit logs is server-derived. Audit records cannot be changed through the portal.
 
-An Auth trigger prevents direct unapproved signups and email-identity changes. Provisioning is bound to an unpredictable UUID created while claiming the code. Account creation failure releases the claim; interrupted claims deliberately fail closed and require administrator recovery. Reset codes revoke old sessions immediately. Sessions remain in browser session storage until sign-out or tab closure. Sign-out revokes the Auth session.
+An Auth trigger prevents direct unapproved signups, email-identity changes, and password changes outside the validated reset-code flow. Provisioning is bound to an unpredictable UUID created while claiming the code. Account creation failure releases the claim; interrupted claims deliberately fail closed and require administrator recovery. Reset codes revoke old sessions immediately. Sessions remain in browser session storage until sign-out or tab closure. Sign-out revokes the Auth session.
 
 Member responses are visible to the member and authorized staff. Warning/LOA details, blacklists, requests, and announcements are filtered on the server. Scrim and VPL attendance both persist. Weekly CSV reports contain the latest shared records and at most the latest 5,000 audit entries; exports neutralize spreadsheet formulas. Reports are downloaded on demand, not emailed or scheduled automatically.
 
@@ -33,4 +33,8 @@ The Edge Function source is in `supabase/functions/portal/index.ts`, with its np
 
 ## Validation
 
+Run `node tests/frontend.cjs` for the page/form renderers, handler syntax, member identity, announcement submission and weekly CSV regression checks. The CSS is verified unchanged from the original repository file. Full screenshot/browser QA was unavailable because the execution environment could not obtain a browser binary.
+
 `tests/live-integration.py` exercises the real deployed backend with disposable, pre-approved accounts supplied through a private `SV_TEST_FIXTURES` JSON file. It never commits or prints credentials. Run against an isolated project or disposable fixtures prepared by an administrator, then remove test records and revoke test sessions. Do not rerun the provisioning tests against active user accounts.
+
+The optional Supabase leaked-password protection setting is disabled. No paid feature has been enabled. The application enforces 12–128 character passwords through its provisioning/reset flow. See https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection for the optional setting.

@@ -100,3 +100,13 @@ document.addEventListener('visibilitychange',async()=>{if(!document.hidden&&svSe
 (async()=>{if(svSession){try{await svLoad();svShowApp()}catch{await logout()}}})();
 const svWarningForm=warningForm;warningForm=function(...args){svWarningForm(...args);if($('wStaff')){$('wStaff').value=currentIdentity();$('wStaff').readOnly=true}};
 const svLoaForm=loaForm;loaForm=function(...args){svLoaForm(...args);if($('loaStaff')){$('loaStaff').value=currentIdentity();$('loaStaff').readOnly=true}};
+saveAnnouncement=function(id){
+ if(access!=='developer')return;
+ const title=val('annTitle'),message=val('annMessage'),audience=val('annAudience'),pinned=$('annPinned').checked;
+ if(!title||!message)return alert('Enter a title and message.');
+ const old=data.announcements.find(x=>x.id===id),entry={id:old?.id||crypto.randomUUID(),title,message,audience,pinned,author:currentIdentity(),at:old?.at||new Date().toISOString()};
+ if(old)data.announcements[data.announcements.indexOf(old)]=entry;else data.announcements.unshift(entry);
+ persist();closeModal();render();
+};
+deleteAnnouncement=function(id){if(access!=='developer'||!confirm('Delete this announcement?'))return;data.announcements=data.announcements.filter(x=>x.id!==id);persist();render()};
+svWeekDates=function(){const end=$('reportWeek')?.value||todayLocal(),start=new Date(end+'T12:00:00Z');start.setUTCDate(start.getUTCDate()-6);return {start:start.toISOString().slice(0,10),end}};
