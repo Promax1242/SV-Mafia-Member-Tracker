@@ -1,8 +1,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.95.3';
 const url=Deno.env.get('SUPABASE_URL')!;
 const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
-const origin='https://botond735.github.io';
-const headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin'};
+const origin='https://promax1242.github.io';
+const allowedOrigins=new Set([origin,'https://botond735.github.io']);
+const baseHeaders={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin'};
 const email=(id:string)=>id+'@members.sv-mafia.invalid';
 const idOK=(id:unknown)=>typeof id==='string'&&/^\d{15,22}$/.test(id);
 function fail(message:string):never{throw new Error(message)}
@@ -33,6 +34,9 @@ export function validateChanges(changes:any){
  }
 }
 Deno.serve(async req=>{
+ const requestOrigin=req.headers.get('origin');
+ const origin=requestOrigin&&allowedOrigins.has(requestOrigin)?requestOrigin:'https://promax1242.github.io';
+ const headers={...baseHeaders,'Access-Control-Allow-Origin':origin};
  if(req.method==='OPTIONS')return new Response('ok',{headers});
  const reply=(v:unknown,status=200)=>new Response(JSON.stringify(v),{status,headers});
  if(req.method!=='POST')return reply({error:'POST required'},405);

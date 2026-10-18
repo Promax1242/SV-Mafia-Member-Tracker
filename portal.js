@@ -110,3 +110,25 @@ saveAnnouncement=function(id){
 };
 deleteAnnouncement=function(id){if(access!=='developer'||!confirm('Delete this announcement?'))return;data.announcements=data.announcements.filter(x=>x.id!==id);persist();render()};
 svWeekDates=function(){const end=$('reportWeek')?.value||todayLocal(),start=new Date(end+'T12:00:00Z');start.setUTCDate(start.getUTCDate()-6);return {start:start.toISOString().slice(0,10),end}};
+// Allow the verified Developer to edit their profile without changing protected access.
+const svMemberForm=memberForm;
+memberForm=function(i){
+ svMemberForm(i);
+ const m=i===undefined?null:data.members[i];
+ if(m?.role.includes('Developer')){
+  $('mId').readOnly=true;$('mStatus').disabled=true;
+  document.querySelectorAll('#modalContent button').forEach(b=>{if(/^(resetDemoPassword|removeMember)\(/.test(b.getAttribute('onclick')||''))b.classList.add('hidden')});
+ }
+};
+const svSaveMember=saveMember;
+saveMember=function(i){
+ const old=i===null?null:data.members[i];
+ if(!old?.role.includes('Developer'))return svSaveMember(i);
+ if(access!=='developer'||old.id!==svState?.me)return alert('Only the Developer can edit this profile.');
+ const name=val('mName'),joined=val('mJoined');
+ if(!name||name.length>100||!/^\d{4}-\d{2}-\d{2}$/.test(joined))return alert('Enter a display name and valid join date.');
+ const selected=[...document.querySelectorAll('.roleCheck:checked')].map(x=>data.roles[Number(x.value)]?.name).filter(r=>r&&!['Developer','Leadership'].includes(r));
+ const protectedRoles=old.role.filter(r=>['Developer','Leadership'].includes(r));
+ data.members[i]={...old,name,joined,role:[...new Set([...selected,...protectedRoles])]};
+ persist();closeModal();render();
+};

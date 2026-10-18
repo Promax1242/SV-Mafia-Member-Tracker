@@ -34,4 +34,10 @@ node('annTitle').value='Shared announcement';node('annMessage').value='Stored on
  snapshot.attendance={'900000000001:999999999999999992':{eventId:'900000000001',memberId:'999999999999999992',response:'Attended'}};
  snapshot.data.members[1].name='=DANGEROUS_FORMULA';node('reportWeek').value='2026-10-18';
  await vm.runInContext('svApply(snapshot);svDownloadReport()',ctx);const csv=await csvBlob.text();assert.ok(csv.includes('Attendance'));assert.ok(csv.includes('Staff Activity'));assert.ok(csv.includes("'=DANGEROUS_FORMULA"));assert.ok(csv.includes('VPL vs Test'));assert.ok(csv.includes('2026-10-12 to 2026-10-18'));
- console.log('PASS weekly CSV contains shared attendance/activity, neutralizes formulas, and uses timezone-safe dates')})().catch(e=>{console.error(e);process.exitCode=1});
+ console.log('PASS weekly CSV contains shared attendance/activity, neutralizes formulas, and uses timezone-safe dates');
+ ctx.document.querySelectorAll=selector=>selector==='.roleCheck:checked'?[{value:'2'}]:[];
+ vm.runInContext('svApply(snapshot);memberForm(0)',ctx);assert.equal(node('mId').readOnly,true);assert.equal(node('mStatus').disabled,true);
+ node('mName').value='Promax';node('mJoined').value='2026-10-18';node('mId').value='999999999999999991';node('mStatus').value='Suspended';
+ await vm.runInContext('saveMember(0);svQueue',ctx);const memberChange=submitted.changes.find(c=>c.kind==='members');assert.equal(memberChange.value.name,'Promax');assert.equal(memberChange.value.id,'772822130236719136');assert.equal(memberChange.value.status,'Active');assert.ok(memberChange.value.role.includes('Developer'));assert.ok(memberChange.value.role.includes('Mafia'));
+ ctx.snapshot={...snapshot,access:'member',me:'999999999999999992'};vm.runInContext('svApply(snapshot)',ctx);assert.throws(()=>vm.runInContext('saveMember(0)',ctx),/Only the Developer/);
+ console.log('PASS Developer profile editing preserves Discord ID, active status and Developer access; member edits denied')})().catch(e=>{console.error(e);process.exitCode=1});
