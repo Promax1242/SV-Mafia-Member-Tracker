@@ -1,0 +1,3 @@
+[functions.portal]
+# Public login/activation routes; all other routes validate Auth user + live session + DB access.
+verify_jwt = false
